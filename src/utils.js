@@ -1,15 +1,32 @@
 const fs = require("fs");
-const process = require("process");
 const globrex = require("globrex");
 const Diff = require("diff");
 
-const { SIZES, IGNORE_COMMENT_LINES, IGNORE_COMMENT_PATTERN_MAP, TEST_MATCH_MAP, GITHUB_ACTIONS } = require("./constants");
+const { 
+  SIZES, 
+  IGNORE_COMMENT_LINES, 
+  IGNORE_COMMENT_PATTERN_MAP, 
+  TEST_MATCH_MAP, 
+  GITHUB_ACTIONS,
+  SCORING_STRATEGIES
+} = require("./constants");
 
 const debug = GITHUB_ACTIONS === 'true' ? 
   require("@actions/core").debug : 
   console.log 
 
 const globrexOptions = { extended: true, globstar: true };
+
+const scoring = {
+  ["tests-are-less-complex"]: false,
+  ["single-words-are-less-complex"]: false,
+}
+
+SCORING_STRATEGIES.trim().split(" ")
+  .filter(strategy => scoring[strategy] !== undefined)
+  .forEach(strategy => scoring[strategy] = true)
+
+debug(`Scoring strategies:\n- ${Object.entries(scoring).join("\n- ").replace(/,/g, ": ")}`)
 
 const defaultTest = line => {
   return /^[+-]\s*\S+/.test(line);
@@ -87,11 +104,11 @@ const scoreFile = (file) => (
       const matched = matchLine(line, file.newFileName)
       if (matched) {
         points++
-        if (singleWordTest(line)) {
+        if (scoring["single-words-are-less-complex"] && singleWordTest(line)) {
           debug(`Single word change detected: ${line} -- deducting ${singleWordDeduction} from score.`)
           points -= singleWordDeduction;
         }
-        if (isTestFile(file.newFileName)) {
+        if (scoring["tests-are-less-complex"] && isTestFile(file.newFileName)) {
           debug(`Test file change detected: ${file.newFileName}: ${line} -- deducting ${testFileDeduction} from score.`)
           points -= testFileDeduction;
         }

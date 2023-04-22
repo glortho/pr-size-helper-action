@@ -1,8 +1,8 @@
 # PR Size Helper action
 
-This action adds [size labels](https://github.com/kubernetes/kubernetes/labels?q=size) to pull requests. If a pull requests is above 1000 lines of additions and deletions, the action will prompt the PR author for more context to help explain the size of the PR. If the author chooses to give additional context, the reason will be tracked along with all others in a digest issue.
+This action adds [size labels](https://github.com/kubernetes/kubernetes/labels?q=size) to pull requests. If a pull requests is above a configured complexity threshold (calculated by default by summing lines of additions and deletions), the action will prompt the PR author for more context to help explain the size of the PR. If the author chooses to give additional context, the reason will be tracked along with all others in a digest issue.
 
-The end goal is to proactively capture reasons why pull requests are above 1000 lines of additions + deletions and to index all of those reasons in one easy to find place.
+The end goal is to proactively capture reasons why pull requests are above a certain number of changes and to index all of those reasons in one easy to find place.
 
 ## Demo
 
@@ -72,10 +72,10 @@ The following environment variables are supported:
 
 - `IGNORED`: A list of [glob expressions](http://man7.org/linux/man-pages/man7/glob.7.html)
   separated by newlines. Files matching these expressions will not count when
-  calculating the change size of the pull request. Lines starting with `#` are
+  calculating the complexity of the pull request. Lines starting with `#` are
   ignored and files matching lines starting with `!` are always included.
-- `PROMPT_THRESHOLD`: Pull requests created with a combined additions/deletions greater or equal to this value will trigger a friendly message prompting the pull request author to provide a reason for the size of the pull request. Defaults to 500.
-- `S` | `M` | `L` | `XL` | `XXL`: Setting one, some, or all of these will change the pull request size labelling. Pull requests with a size between 0 and `S` will be labeled as `size/XS`, PRs with a size between `S` and `M` will be labeled as `S` and so on. Defaults:
+- `PROMPT_THRESHOLD`: Pull requests created with a complexity score greater or equal to this value will trigger a friendly message prompting the pull request author to provide a reason for the size of the pull request. Defaults to 500.
+- `S` | `M` | `L` | `XL` | `XXL`: Setting one, some, or all of these will change the pull request size labelling. Pull requests with a complexity score between 0 and `S` will be labeled as `size/XS`, PRs with a size between `S` and `M` will be labeled as `S` and so on. Defaults:
   - `S`: 10
   - `M`: 30
   - `L`: 100
@@ -87,6 +87,9 @@ The following environment variables are supported:
 this workflow from running any time that the PR author is not a member of one of
 the specified teams. The owning organization for each team is assumed to be the
 the owner of the repository that acts as the base of the newly opened pull request.
+- `SCORING_STRATEGY`: An optional space-delimited list of strategies to use when calculating the complexity of a PR. By default, the complexity score is calculated by assigning 1 point to each line added and 1 point to each line removed, excluding any files specified in `IGNORED` as well as any whitespace lines and comment lines (limited language support for now, but more coming). The optional strategies listed below modify this behavior rather than replace it:
+  - `tests-are-less-complex`: This strategy subtracts 0.5 points for each line change in test files.
+  - `single-words-are-less-complex`: This strategy subtracts 0.5 points for each line change where the content of the line being changed is a single word. This is based on the assumption that if a line contains nothing but a single word (optionally surrounded by quotes or simple punctuation), it contributes less to overall complexity than other kinds of changes, and may in fact be formatted this way to improve readability/comprehension.
 
 You can configure the environment variables in the `apply-pr-size-label.yml` workflow file like this:
 

@@ -30,6 +30,8 @@ const IGNORE_COMMENT_LINES = process.env.IGNORE_COMMENT_LINES || null;
 
 const GITHUB_ACTIONS = process.env.GITHUB_ACTIONS === "true";
 
+const SCORING_STRATEGIES = process.env.SCORING_STRATEGIES || "";
+
 // file extension => comment character for that file type
 const COMMENT_CHAR_MAP = {
   "rb": "#"
@@ -56,5 +58,6 @@ module.exports = {
   IGNORE_COMMENT_PATTERN_MAP,
   FEEDBACK_LINK,
   TEST_MATCH_MAP,
-  GITHUB_ACTIONS
+  GITHUB_ACTIONS,
+  SCORING_STRATEGIES
 };
