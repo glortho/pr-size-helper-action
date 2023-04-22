@@ -1,5 +1,5 @@
 name: 'Pull request size helper'
 description: 'Get to the bottom of large PRs!'
 runs:
-  using: 'node14'
+  using: 'node16'
   main: 'dist/index.js'
