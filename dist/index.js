@@ -12257,7 +12257,6 @@ module.exports = handleReasonComment;
 /***/ 4351:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-const process = __nccwpck_require__(1765);
 const url = __nccwpck_require__(8835);
 
 const core = __nccwpck_require__(2186);
@@ -12314,7 +12313,7 @@ const run = async () => {
     if (eventData.pull_request) {
       core.info("Handling PR...");
 
-      const teams = (process.env.TEAMS || "").split(" ");
+      const teams = (process.env.TEAMS || "").split(" ").filter(Boolean) // only truthy/non-empty values
       core.debug(`Allowed teams: ${teams.toString() || "None specified"}`);
 
       const teamMembers = teams.length ? 
@@ -12585,6 +12584,7 @@ const ensureLabelExists = async (octokit, repo, owner, name, color) => {
 };
 
 const fetchTeamMembers = async (octokit, organization, teams) => {
+  debug(`Fetching team members for teams: ${teams.toString()}`)
   const result = new Set();
 
   const allMembers = await Promise.all(
@@ -12711,14 +12711,6 @@ module.exports = require("os");;
 
 "use strict";
 module.exports = require("path");;
-
-/***/ }),
-
-/***/ 1765:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("process");;
 
 /***/ }),
 
