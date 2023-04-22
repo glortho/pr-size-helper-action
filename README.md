@@ -81,7 +81,7 @@ The following environment variables are supported:
   - `L`: 100
   - `XL`: 500
   - `XXL`: 1000
-- `DIGEST_ISSUE_REPO`: The location of the digest issue, by default the digest issue will be created and updated in the repo where the action is configured. If you would like the digest issue to be created and updated in a repo outside of where the action is configured, set this to the url of the repo (e.g. "https://github.com/octokit/rest.js") **This requires ACCESS_TOKEN to be configured.**
+- `DIGEST_ISSUE_REPO`: The location of the digest issue, by default the digest issue will be created and updated in the repo where the action is configured. If you would like the digest issue to be created and updated in a repo outside of where the action is configured, set this to the url of the repo (e.g. "https://github.com/octokit/core.js") **This requires ACCESS_TOKEN to be configured.**
 - `ACCESS_TOKEN`: This is a [GitHub personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with the `repo` scope, stored as a [secret](https://docs.github.com/en/actions/reference/encrypted-secrets#creating-encrypted-secrets-for-a-repository) in the repo where this action is configured.
 - `TEAMS`: This a space-delimited string of [team](https://docs.github.com/en/organizations/organizing-members-into-teams/about-teams) slugs, that restricts
 this workflow from running any time that the PR author is not a member of one of
@@ -103,7 +103,7 @@ env:
   L: 100
   XL: 500
   XXL: 1000
-  DIGEST_ISSUE_REPO: "https://github.com/octokit/rest.js"
+  DIGEST_ISSUE_REPO: "https://github.com/octokit/core.js"
   ACCESS_TOKEN: "${{ secrets.ACCESS_TOKEN }}"
 ```
 

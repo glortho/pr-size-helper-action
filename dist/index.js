@@ -10981,7 +10981,7 @@ module.exports = handlePR;
 /***/ 3953:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-const { Octokit } = __nccwpck_require__(2785);
+const { Octokit } = __nccwpck_require__(6762);
 const core = __nccwpck_require__(2186);
 
 const handleReasonComment = async (
@@ -11466,14 +11466,6 @@ module.exports = {
   fetchTeamMembers,
   readFile,
 };
-
-
-/***/ }),
-
-/***/ 2785:
-/***/ ((module) => {
-
-module.exports = eval("require")("@octokit/rest");
 
 
 /***/ }),
