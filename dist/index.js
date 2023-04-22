@@ -12323,7 +12323,7 @@ const run = async () => {
       const individuals = (process.env.AUTHOR_LOGINS || "").split(" ");
       core.debug(`Allowed individiuals ${individuals.toString() || "None specified"}`);
 
-      const allowedAuthors = new Set(...teamMembers.concat(individuals));
+      const allowedAuthors = new Set(teamMembers.concat(individuals));
       core.debug(`All allowed authors: ${[...allowedAuthors].toString()}`);
 
       core.debug(`PR author: ${eventData.pull_request.user.login}`);
