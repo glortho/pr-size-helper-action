@@ -28,6 +28,7 @@
     "@actions/core": "^1.2.5",
     "@octokit/core": "^4.2.0",
     "@octokit/plugin-paginate-rest": "^6.0.0",
+    "@octokit/rest": "^19.0.7",
     "diff": "^5.0.0",
     "globrex": "^0.1.2"
   },

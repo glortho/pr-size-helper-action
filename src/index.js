@@ -1,7 +1,7 @@
 const url = require("url");
 
 const core = require("@actions/core");
-const { Octokit } = require("@octokit/core");
+const { Octokit } = require("@octokit/rest");
 const { paginateRest } = require('@octokit/plugin-paginate-rest');
 
 const handleReasonComment = require("./handleReasonComment");
