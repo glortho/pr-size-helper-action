@@ -1,4 +1,3 @@
-const process = require("process");
 const url = require("url");
 
 const core = require("@actions/core");
@@ -55,7 +54,7 @@ const run = async () => {
     if (eventData.pull_request) {
       core.info("Handling PR...");
 
-      const teams = (process.env.TEAMS || "").split(" ");
+      const teams = (process.env.TEAMS || "").split(" ").filter(Boolean) // only truthy/non-empty values
       core.debug(`Allowed teams: ${teams.toString() || "None specified"}`);
 
       const teamMembers = teams.length ? 

@@ -171,6 +171,7 @@ const ensureLabelExists = async (octokit, repo, owner, name, color) => {
 };
 
 const fetchTeamMembers = async (octokit, organization, teams) => {
+  debug(`Fetching team members for teams: ${teams.toString()}`)
   const result = new Set();
 
   const allMembers = await Promise.all(
