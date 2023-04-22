@@ -12000,8 +12000,18 @@ const FEEDBACK_LINK = process.env.FEEDBACK_LINK || null;
 
 const IGNORE_COMMENT_LINES = process.env.IGNORE_COMMENT_LINES || null;
 
+const GITHUB_ACTIONS = process.env.GITHUB_ACTIONS === "true";
+
+const SCORING_STRATEGIES = process.env.SCORING_STRATEGIES || "";
+
+// file extension => comment character for that file type
 const COMMENT_CHAR_MAP = {
   "rb": "#"
+}
+
+// file extension => regex that matches test file naming conventions
+const TEST_MATCH_MAP = {
+  "rb": /_test\.rb$/
 }
 
 const IGNORE_COMMENT_PATTERN_MAP = Object.entries(COMMENT_CHAR_MAP)
@@ -12018,7 +12028,10 @@ module.exports = {
   ACCESS_TOKEN,
   IGNORE_COMMENT_LINES,
   IGNORE_COMMENT_PATTERN_MAP,
-  FEEDBACK_LINK
+  FEEDBACK_LINK,
+  TEST_MATCH_MAP,
+  GITHUB_ACTIONS,
+  SCORING_STRATEGIES
 };
 
 
@@ -12032,7 +12045,7 @@ const core = __nccwpck_require__(2186);
 const { LABEL_COLORS, PROMPT_THRESHOLD, FEEDBACK_LINK } = __nccwpck_require__(4438);
 const {
   parseIgnored,
-  getChangedLines,
+  scoreChanges,
   getSizeLabel,
   getLabelChanges,
   ensureLabelExists,
@@ -12054,15 +12067,15 @@ const handlePR = async (
     repo,
     pull_number: prNumber,
     headers: {
-      accept: "application/vnd.github.v3.diff",
+      accept: "application/vnd.github.diff",
     },
   });
 
-  const changedLines = getChangedLines(isIgnored, pullRequestDiff.data);
+  const score = scoreChanges(isIgnored, pullRequestDiff.data);
 
-  core.info(`Changed lines: ${changedLines}`);
+  core.info(`Change score: ${score}`);
 
-  const sizeLabel = getSizeLabel(changedLines);
+  const sizeLabel = getSizeLabel(score);
 
   core.info(`Matching label: ${sizeLabel}`);
 
@@ -12088,7 +12101,7 @@ const handlePR = async (
       labels: add,
     });
 
-    if (changedLines >= PROMPT_THRESHOLD) {
+    if (score >= PROMPT_THRESHOLD) {
       let body = `👋 @${prAuthorLogin} this pull request changes ${changedLines} significant lines of code, which exceeds the recommended threshold of ${PROMPT_THRESHOLD}.
 
 [Research](https://www.cabird.com/static/93aba3256c80506d3948983db34d3ba3/rigby2013convergent.pdf) has shown that this makes it harder for reviewers to provide quality feedback.
@@ -12399,25 +12412,50 @@ run();
 const fs = __nccwpck_require__(5747);
 const globrex = __nccwpck_require__(3927);
 const Diff = __nccwpck_require__(1672);
-const core = __nccwpck_require__(2186);
 
-const { SIZES, IGNORE_COMMENT_LINES, IGNORE_COMMENT_PATTERN_MAP } = __nccwpck_require__(4438);
+const { 
+  SIZES, 
+  IGNORE_COMMENT_LINES, 
+  IGNORE_COMMENT_PATTERN_MAP, 
+  TEST_MATCH_MAP, 
+  GITHUB_ACTIONS,
+  SCORING_STRATEGIES
+} = __nccwpck_require__(4438);
+
+const debug = GITHUB_ACTIONS === 'true' ? 
+  __nccwpck_require__(2186).debug : 
+  console.log 
 
 const globrexOptions = { extended: true, globstar: true };
+
+const scoring = {
+  ["tests-are-less-complex"]: false,
+  ["single-words-are-less-complex"]: false,
+}
+
+SCORING_STRATEGIES.trim().split(" ")
+  .filter(strategy => scoring[strategy] !== undefined)
+  .forEach(strategy => scoring[strategy] = true)
+
+debug(`Scoring strategies:\n- ${Object.entries(scoring).join("\n- ").replace(/,/g, ": ")}`)
 
 const defaultTest = line => {
   return /^[+-]\s*\S+/.test(line);
 }
 
+const singleWordTest = line => {
+  return /^[+-]\s*(["'`]?)\b\w+\b\1\S?$/.test(line);
+}
+
 const matchLine = (line, fileName) => {
   if (IGNORE_COMMENT_LINES) {
-    core.debug("Ignore comment lines set to true.")
+    debug("Ignore comment lines set to true.")
     const ext = fileName.split('.').pop();
     const pattern = IGNORE_COMMENT_PATTERN_MAP.get(ext)
     if (pattern) {
-      core.debug("Found ignore comment pattern for file extension: " + ext)
+      debug("Found ignore comment pattern for file extension: " + ext)
       const result = pattern.test(line)
-      core.debug("Ignore comment pattern result: " + result + ", line: " + line)
+      debug("Ignore comment pattern result: " + result + ", line: " + line)
       return pattern.test(line) && defaultTest(line)
     }
   }
@@ -12457,17 +12495,44 @@ const parseIgnored = (str = "") => {
   return isIgnored;
 };
 
-const getChangedLines = (isIgnored, diff) => {
-  return Diff.parsePatch(diff)
-    .flatMap(file => {
-      if (isIgnored(file.oldFileName) && isIgnored(file.newFileName)) {
-        return [];
+const isTestFile = (fileName) => {
+  const ext = fileName.split('.').pop()
+  const testMatch = TEST_MATCH_MAP[ext];
+  if (testMatch) {
+    return testMatch.test(fileName);
+  }
+  return false;
+}
+
+const singleWordDeduction = 0.5;
+const testFileDeduction = 0.5
+
+const scoreFile = (file) => (
+  file.hunks
+    .flatMap(hunk => hunk.lines)
+    .reduce((score, line) => {
+      let points = 0;
+      const matched = matchLine(line, file.newFileName)
+      if (matched) {
+        points++
+        if (scoring["single-words-are-less-complex"] && singleWordTest(line)) {
+          debug(`Single word change detected: ${line} -- deducting ${singleWordDeduction} from score.`)
+          points -= singleWordDeduction;
+        }
+        if (scoring["tests-are-less-complex"] && isTestFile(file.newFileName)) {
+          debug(`Test file change detected: ${file.newFileName}: ${line} -- deducting ${testFileDeduction} from score.`)
+          points -= testFileDeduction;
+        }
       }
-      return file.hunks
-        .flatMap(hunk => hunk.lines)
-        .filter(line => matchLine(line, file.newFileName))
-    }).length
-};
+      return score + points
+    }, 0)
+)
+
+const scoreChanges = (isIgnored, diff) => (
+  Diff.parsePatch(diff)
+    .filter(file => !(isIgnored(file.oldFileName) && isIgnored(file.newFileName)))
+    .reduce((score, file) => score + scoreFile(file), 0)
+)
 
 const getSizeLabel = (changedLines) => {
   let label = null;
@@ -12555,7 +12620,7 @@ const readFile = async (path) => {
 
 module.exports = {
   parseIgnored,
-  getChangedLines,
+  scoreChanges,
   getSizeLabel,
   getLabelChanges,
   ensureLabelExists,
