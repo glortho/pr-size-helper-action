@@ -12315,17 +12315,20 @@ const run = async () => {
       core.info("Handling PR...");
 
       const teams = (process.env.TEAMS || "").split(" ");
-      core.debug(`Allowed teams: ${teams.toString()}`);
+      core.debug(`Allowed teams: ${teams.toString() || "None specified"}`);
+
+      const teamMembers = teams.length ? 
+        await fetchTeamMembers(octokit, eventData.pull_request.base.repo.owner.login, teams) :
+        [];
 
       const individuals = (process.env.AUTHOR_LOGINS || "").split(" ");
-      core.debug(`Allowed individiuals ${individuals.toString()}`);
+      core.debug(`Allowed individiuals ${individuals.toString() || "None specified"}`);
 
-      const teamMembers = await fetchTeamMembers(octokit, eventData.pull_request.base.repo.owner.login, teams);
-      const allowedAuthors = teamMembers + individuals;
-      core.debug(`All allowed authors: ${allowedAuthors.toString()}`);
+      const allowedAuthors = new Set(...teamMembers.concat(individuals));
+      core.debug(`All allowed authors: ${[...allowedAuthors].toString()}`);
 
       core.debug(`PR author: ${eventData.pull_request.user.login}`);
-      if (allowedAuthors.length > 0 && !allowedAuthors.includes(eventData.pull_request.user.login)) {
+      if (allowedAuthors.size > 0 && !allowedAuthors.has(eventData.pull_request.user.login)) {
         core.info(`Ignoring this PR because the author ${eventData.pull_request.user.login} has not opted into this workflow.`);
         return;
       }
