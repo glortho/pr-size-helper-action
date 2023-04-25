@@ -7,11 +7,11 @@ const {
   IGNORE_COMMENT_LINES, 
   IGNORE_COMMENT_PATTERN_MAP, 
   TEST_MATCH_MAP, 
-  GITHUB_ACTIONS,
-  SCORING_STRATEGIES
+  SCORING_STRATEGIES,
+  inActionsContext
 } = require("./constants");
 
-const debug = GITHUB_ACTIONS === 'true' ? 
+const debug = inActionsContext ? 
   require("@actions/core").debug : 
   console.log 
 

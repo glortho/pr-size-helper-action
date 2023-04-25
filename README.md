@@ -2,8 +2,6 @@
 
 This action adds [size labels](https://github.com/kubernetes/kubernetes/labels?q=size) to pull requests. If a pull requests is above a configured complexity threshold (calculated by default by summing lines of additions and deletions), the action will prompt the PR author for more context to help explain the size of the PR. If the author chooses to give additional context, the reason will be tracked along with all others in a digest issue.
 
-The end goal is to proactively capture reasons why pull requests are above a certain number of changes and to index all of those reasons in one easy to find place.
-
 ## Demo
 
 **1. A contributor creates a new PR:**
@@ -66,6 +64,23 @@ jobs:
 
 ```
 
+## Complexity scoring
+
+By default, the complexity score is calculated as follows:
+
+```
+Lines added + lines removed - whitespace lines - comment lines = complexity score.
+```
+
+Note that `IGNORED` files are not factored into the calculation.
+
+There are additional scoring strategies that you can opt into if you choose:
+
+- `tests-are-less-complex`: Subtract 0.5 points for each line in a test file.
+- `single-words-are-less-complex`: Subtract 0.5 points for each line that has nothing on it but a single word.
+
+See the `SCORING_STRATEGIES` variable below for details on how to opt into these.
+
 ## Configuration
 
 The following environment variables are supported:
@@ -74,22 +89,28 @@ The following environment variables are supported:
   separated by newlines. Files matching these expressions will not count when
   calculating the complexity of the pull request. Lines starting with `#` are
   ignored and files matching lines starting with `!` are always included.
+
 - `PROMPT_THRESHOLD`: Pull requests created with a complexity score greater or equal to this value will trigger a friendly message prompting the pull request author to provide a reason for the size of the pull request. Defaults to 500.
+
 - `S` | `M` | `L` | `XL` | `XXL`: Setting one, some, or all of these will change the pull request size labelling. Pull requests with a complexity score between 0 and `S` will be labeled as `size/XS`, PRs with a size between `S` and `M` will be labeled as `S` and so on. Defaults:
   - `S`: 10
   - `M`: 30
   - `L`: 100
   - `XL`: 500
   - `XXL`: 1000
+
 - `DIGEST_ISSUE_REPO`: The location of the digest issue, by default the digest issue will be created and updated in the repo where the action is configured. If you would like the digest issue to be created and updated in a repo outside of where the action is configured, set this to the url of the repo (e.g. "https://github.com/octokit/core.js") **This requires ACCESS_TOKEN to be configured.**
+
 - `ACCESS_TOKEN`: This is a [GitHub personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with the `repo` scope, stored as a [secret](https://docs.github.com/en/actions/reference/encrypted-secrets#creating-encrypted-secrets-for-a-repository) in the repo where this action is configured.
+
 - `TEAMS`: This a space-delimited string of [team](https://docs.github.com/en/organizations/organizing-members-into-teams/about-teams) slugs, that restricts
 this workflow from running any time that the PR author is not a member of one of
 the specified teams. The owning organization for each team is assumed to be the
 the owner of the repository that acts as the base of the newly opened pull request.
-- `SCORING_STRATEGY`: An optional space-delimited list of strategies to use when calculating the complexity of a PR. By default, the complexity score is calculated by assigning 1 point to each line added and 1 point to each line removed, excluding any files specified in `IGNORED` as well as any whitespace lines and comment lines (limited language support for now, but more coming). The optional strategies listed below modify this behavior rather than replace it:
+
+- `SCORING_STRATEGIES`: An optional space-delimited list of strategies to use when calculating the complexity of a PR:
   - `tests-are-less-complex`: This strategy subtracts 0.5 points for each line change in test files.
-  - `single-words-are-less-complex`: This strategy subtracts 0.5 points for each line change where the content of the line being changed is a single word. This is based on the assumption that if a line contains nothing but a single word (optionally surrounded by quotes or simple punctuation), it contributes less to overall complexity than other kinds of changes, and may in fact be formatted this way to improve readability/comprehension.
+  - `single-words-are-less-complex`: This strategy subtracts 0.5 points for each line change where the content of the line being changed is a single word. 
 
 You can configure the environment variables in the `apply-pr-size-label.yml` workflow file like this:
 
@@ -105,6 +126,7 @@ env:
   XXL: 1000
   DIGEST_ISSUE_REPO: "https://github.com/octokit/core.js"
   ACCESS_TOKEN: "${{ secrets.ACCESS_TOKEN }}"
+  SCORING_STRATEGIES: "tests-are-less-complex"
 ```
 
 ### Example configuration for action that publishes it's digest issue outside of the repo where it's configured
