@@ -12102,7 +12102,7 @@ const handlePR = async (
     });
 
     if (score >= PROMPT_THRESHOLD) {
-      let body = `👋 @${prAuthorLogin} this pull request exceeds the recommended threshold of ${PROMPT_THRESHOLD} lines changed. Your actual score: ${score} (see https://github.com/glortho/pr-size-helper-action/#complexity-scoring for more detail on scoring).
+      let body = `👋 @${prAuthorLogin} this pull request exceeds the recommended [complexity threshold](https://github.com/glortho/pr-size-helper-action/#complexity-scoring) of ${PROMPT_THRESHOLD}. Your actual score was ${score}.
 
 [Research](https://www.cabird.com/static/93aba3256c80506d3948983db34d3ba3/rigby2013convergent.pdf) has shown that this makes it harder for reviewers to provide quality feedback.
 
