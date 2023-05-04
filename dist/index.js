@@ -12016,6 +12016,8 @@ const COMMENT_CHAR_MAP = {
 // file extension => regex that matches test file naming conventions
 const TEST_MATCH_MAP = {
   "rb": /_test\.rb$/,
+  "js": /-test\.js$/,
+  "jsx": /-test\.jsx$/,
   "ts": /-test\.ts$/,
   "tsx": /-test\.tsx$/,
 }
@@ -12434,6 +12436,8 @@ const debug = inActionsContext ?
   __nccwpck_require__(2186).debug : 
   console.log 
 
+debug(`Ignore comment lines set to ${IGNORE_COMMENT_LINES}.`)
+
 const globrexOptions = { extended: true, globstar: true };
 
 const scoring = {
@@ -12457,18 +12461,18 @@ const singleWordTest = line => {
 
 const matchLine = (line, fileName) => {
   if (IGNORE_COMMENT_LINES) {
-    debug("Ignore comment lines set to true.")
     const ext = fileName.split('.').pop();
     const pattern = IGNORE_COMMENT_PATTERN_MAP.get(ext)
     if (pattern) {
-      debug("Found ignore comment pattern for file extension: " + ext)
       const result = pattern.test(line)
-      debug("Ignore comment pattern result: " + result + ", line: " + line)
+      debug("Include line in score? " + result + ", line: " + line)
       return pattern.test(line) && defaultTest(line)
     }
   }
   // Return any lines that start with +/- that have any non-whitespace characters (i.e. whitespace changes are ignored)
-  return defaultTest(line);
+  const result = defaultTest(line);
+  debug("Include line in score? " + result + ", line: " + line);
+  return result;
 }
 
 const parseIgnored = (str = "") => {
