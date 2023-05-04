@@ -34,12 +34,18 @@ const SCORING_STRATEGIES = process.env.SCORING_STRATEGIES || "";
 
 // file extension => comment character for that file type
 const COMMENT_CHAR_MAP = {
-  "rb": "#"
+  "rb": "#",
+  "ts": "/",
+  "tsx": "/",
+  "js": "/",
+  "jsx": "/",
 }
 
 // file extension => regex that matches test file naming conventions
 const TEST_MATCH_MAP = {
-  "rb": /_test\.rb$/
+  "rb": /_test\.rb$/,
+  "ts": /-test\.ts$/,
+  "tsx": /-test\.tsx$/,
 }
 
 const IGNORE_COMMENT_PATTERN_MAP = Object.entries(COMMENT_CHAR_MAP)
