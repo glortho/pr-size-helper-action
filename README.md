@@ -8,26 +8,17 @@ This action adds [size labels](https://github.com/kubernetes/kubernetes/labels?q
 
 ![a large pr is created](https://user-images.githubusercontent.com/1746081/112671818-e7432600-8e1f-11eb-8ca4-d6849eb77b14.png)
 
-
 **2. pr-size-helper-action labels it with a (configurable) `size/` label:**
 
 ![pr is labeled with size label](https://user-images.githubusercontent.com/1746081/112671828-ee6a3400-8e1f-11eb-9225-e3021fc31896.png)
 
-**3. If the PR crosses a (configurable) change size threshold the PR creator is prompted to provide more context:**
+**3. If the PR crosses a (configurable) complexity size threshold the PR creator is prompted with a comment on the PR like this:**
 
-![action prompts author for reason comment](https://user-images.githubusercontent.com/1746081/112671845-f629d880-8e1f-11eb-9bd7-487b682681c2.png)
-
-**4. When a `!reason` comment is provided, pr-size-helper-action captures the comment in a digest issue (with configurable destination):**
-
-![reason comment is provided and captured](https://user-images.githubusercontent.com/1746081/112671861-fb872300-8e1f-11eb-9ec8-6b720ac99a90.png)
-
-**5. The comment is added to the digest issue along with all other `!reason` comments:**
-
-![digest issue displays all reason comments](https://user-images.githubusercontent.com/1746081/112671878-ff1aaa00-8e1f-11eb-884f-5e6d1f867809.png)
+<img width="841" alt="Screenshot 2023-05-16 at 2 07 02 PM" src="https://github.com/glortho/pr-size-helper-action/assets/526284/567ae55d-0eac-4355-94db-9705d1ce7a33">
 
 ## Usage
 
-Create two workflow files:
+Create the workflow file:
 
 `.github/workflows/apply-pr-size-label.yml`
 
@@ -43,25 +34,6 @@ jobs:
       - uses: levindixon/pr-size-helper-action@v1.5.0
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-```
-
-`.github/workflows/track-large-pr-reasons.yml`
-
-```
-name: Track large PR reasons
-
-on: issue_comment
-
-jobs:
-  track_large_pr_reasons:
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '!reason') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: levindixon/pr-size-helper-action@v1.5.0
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
 ```
 
 ## Complexity scoring
@@ -99,11 +71,9 @@ The following environment variables are supported:
   - `XL`: 500
   - `XXL`: 1000
 
-- `DIGEST_ISSUE_REPO`: The location of the digest issue, by default the digest issue will be created and updated in the repo where the action is configured. If you would like the digest issue to be created and updated in a repo outside of where the action is configured, set this to the url of the repo (e.g. "https://github.com/octokit/core.js") **This requires ACCESS_TOKEN to be configured.**
+- `AUTHOR_LOGINS`: This is a space-delimited list of GitHub usernames matching PR authors for whom this action will run. Any PRs authored by users not included in this list (or part of an enabled team -- see below) will be skipped.
 
-- `ACCESS_TOKEN`: This is a [GitHub personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with the `repo` scope, stored as a [secret](https://docs.github.com/en/actions/reference/encrypted-secrets#creating-encrypted-secrets-for-a-repository) in the repo where this action is configured.
-
-- `TEAMS`: This a space-delimited string of [team](https://docs.github.com/en/organizations/organizing-members-into-teams/about-teams) slugs, that restricts
+- `TEAMS`: (Note: Not yet functional.) This a space-delimited string of [team](https://docs.github.com/en/organizations/organizing-members-into-teams/about-teams) slugs, that restricts
 this workflow from running any time that the PR author is not a member of one of
 the specified teams. The owning organization for each team is assumed to be the
 the owner of the repository that acts as the base of the newly opened pull request.
@@ -124,61 +94,12 @@ env:
   L: 100
   XL: 500
   XXL: 1000
-  DIGEST_ISSUE_REPO: "https://github.com/octokit/core.js"
-  ACCESS_TOKEN: "${{ secrets.ACCESS_TOKEN }}"
   SCORING_STRATEGIES: "tests-are-less-complex"
 ```
 
-### Example configuration for action that publishes it's digest issue outside of the repo where it's configured
-
-In this example we have two repos, one where the action will run (`levindixon/demo-project`) and another where the action will publish and maintain the digest issue (`levindixon/demo-project-two`).
-
-A [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) is generated with the `repo` scope and stored in `levindixon/demo-project` as a [secret](https://docs.github.com/en/actions/reference/encrypted-secrets#creating-encrypted-secrets-for-a-repository) named `ACCESS_TOKEN`
-
-Two workflow files are created in `levindixon/demo-project`:
-
-`.github/workflows/apply-pr-size-label.yml`
-
-```
-name: Apply PR size label
-
-on: pull_request
-
-jobs:
-  apply_pr_size_label:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: levindixon/pr-size-helper-action@v1.5.0
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-```
-
-`.github/workflows/track-large-pr-reasons.yml`
-
-```
-name: Track large PR reasons
-
-on: issue_comment
-
-jobs:
-  track_large_pr_reasons:
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '!reason') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: levindixon/pr-size-helper-action@v1.5.0
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          ACCESS_TOKEN: "${{ secrets.ACCESS_TOKEN }}"
-          DIGEST_ISSUE_REPO: "https://github.com/levindixon/demo-project-two"
-
-```
-
-The result is PRs will be labeled and watched for `!reason` comments in `levindixon/demo-project`, however `!reason` comments will be tracked in a digest issue located in `levindixon/demo-project-two`
-
-This configuration allows you to configure the action in any number of repositories and maintain a single digest issue for any/all of them!
-
 ## Acknowledgments
+
+- This was originally forked from [`levindixon/pr-size-helper-action`](https://github.com/levindixon/pr-size-helper-action). Thank you @levindixon! ✨
 
 - 📝 Repo templated using [`actions/javascript-action`](https://github.com/actions/javascript-action) 📝
 
