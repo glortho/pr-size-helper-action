@@ -44,10 +44,10 @@ const COMMENT_CHAR_MAP = {
 // file extension => regex that matches test file naming conventions
 const TEST_MATCH_MAP = {
   "rb": /_test\.rb$/,
-  "js": /-test\.js$/,
-  "jsx": /-test\.jsx$/,
-  "ts": /-test\.ts$/,
-  "tsx": /-test\.tsx$/,
+  "js": /[-.]test\.js$/,
+  "jsx": /[-.]test\.jsx$/,
+  "ts": /[-.]test\.ts$/,
+  "tsx": /[-.]test\.tsx$/,
 }
 
 const IGNORE_COMMENT_PATTERN_MAP = Object.entries(COMMENT_CHAR_MAP)
