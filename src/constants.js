@@ -48,6 +48,8 @@ const TEST_MATCH_MAP = {
   "jsx": /[-.]test\.jsx$/,
   "ts": /[-.]test\.ts$/,
   "tsx": /[-.]test\.tsx$/,
+  "yml": /test\/*.yml/,
+  "yaml": /test\/*.yaml/,
 }
 
 const IGNORE_COMMENT_PATTERN_MAP = Object.entries(COMMENT_CHAR_MAP)
